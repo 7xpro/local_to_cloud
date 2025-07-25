@@ -6,9 +6,6 @@ import logging
 import pymysql
 from pymysql import Error
 
-
-
-
 app = Flask(__name__)
 load_dotenv(".env")
 
