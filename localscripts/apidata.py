@@ -19,11 +19,11 @@ database=os.getenv('DATABASE_NAME')
 host=os.getenv('HOST_NAME')
 
 
-# logging.basicConfig(
-#     filename='user_search.log',
-#     level=logging.INFO,
-#     format='%(asctime)s | IP: %(ip)s | Agent: %(agent)s | Movie: %(movie)s'
-#     )
+logging.basicConfig(
+    filename='user_search.log',
+    level=logging.INFO,
+    format='%(asctime)s | IP: %(ip)s | Agent: %(agent)s | Movie: %(movie)s'
+    )
 
 movie_page = '''
 <!DOCTYPE html>
@@ -134,10 +134,10 @@ def store_movie_in_db(movie_data,host,user,password,database):
         print('test')
         print("MySQL Error:", e)
 
-    # finally:
-    #     if connection:
-    #         cursor.close()
-    #         connection.close()
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
 
 
 @app.before_request
@@ -152,14 +152,14 @@ def movie_search():
     if request.method == 'POST':
         movie_name = request.form['movie_name']
         
-        # user_ip = request.remote_addr
-        # user_agent = request.headers.get('User-Agent')
+        user_ip = request.remote_addr
+        user_agent = request.headers.get('User-Agent')
         
-        # logging.info('', extra={
-        #     'ip': user_ip,
-        #     'agent': user_agent,
-        #     'movie': movie_name
-        # })
+        logging.info('', extra={
+            'ip': user_ip,
+            'agent': user_agent,
+            'movie': movie_name
+        })
 
         url = f"http://www.omdbapi.com/?t={movie_name.strip().replace(' ', '+')}&apikey={api_key}"
         response = requests.get(url)
