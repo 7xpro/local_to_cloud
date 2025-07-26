@@ -1,15 +1,19 @@
 import scrapy
-
+from .categories import get_categories
 
 class BooksSpider(scrapy.Spider):
     name = "books"
     allowed_domains = ["books.toscrape.com"]
     #response.css('ul.nav.nav-list li ul li a::attr(href)').getall()
-
-    start_urls = ["https://books.toscrape.com/index.html"]
-
+    categorie=get_categories()
+    path='https://books.toscrape.com/'
+    ful_path=path+categorie
+    
+    
+    
+    
     def start_requests(self):
-        yield scrapy.Request(url=self.start_urls[0], callback=self.parse)
+        yield scrapy.Request(url=self.ful_path, callback=self.parse)
 
     def parse(self, response):
         products = response.css("article.product_pod")

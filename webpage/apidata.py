@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import logging
 import pymysql
 from pymysql import Error
+from datetime import datetime
 
 app = Flask(__name__)
 load_dotenv(".env")
@@ -16,8 +17,14 @@ database=os.getenv('DATABASE_NAME')
 host=os.getenv('HOST_NAME')
 
 
+path=datetime.now().strftime("year=%Y/month=%m/day=%d")
+check_path = f'C:/Users/arsha/Desktop/hybrid/database/web_userlogs/{path}/'
+if not os.path.exists(check_path):
+    os.makedirs(check_path)
+
 logging.basicConfig(
-    filename='user_search.log',
+    filename=check_path + '/web_user.log',
+    
     level=logging.INFO,
     format='%(asctime)s | IP: %(ip)s | Agent: %(agent)s | Movie: %(movie)s'
     )
