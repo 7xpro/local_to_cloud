@@ -3,7 +3,6 @@ import os
 import subprocess
 import sys
 sys.path.append("C:/Users/arsha/Desktop/Hybrid/scraper/scraper/spiders/")
-
 from categories import get_categories
 
 
