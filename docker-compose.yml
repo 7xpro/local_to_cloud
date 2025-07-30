@@ -1,0 +1,109 @@
+
+
+services:
+  
+
+  postgres:
+    image: postgres:13
+    container_name: hybrid-postgres-1
+    restart: always
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 10s
+      retries: 5
+
+  airflow-init:
+    image: apache/airflow:2.9.1
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__FERNET_KEY: 'ndegKmAQy3GYgy75XVoER2Z4uERA5o2RYZ3EYEM4VSc='
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./scraper:/opt/airflow/scraper
+      - ./database:/opt/airflow/data
+      - ./.env:/opt/airflow/.env
+      - ./requirements.txt:/requirements.txt
+    command: >
+      bash -c "pip install -r /requirements.txt && airflow db init && airflow users create --username admin --password admin --firstname Arshad --lastname Khan --role Admin --email arshad@example.com"
+
+  airflow-webserver:
+    image: apache/airflow:2.9.1
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__DEFAULT_TIMEZONE: Asia/Kolkata
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__FERNET_KEY: 'ndegKmAQy3GYgy75XVoER2Z4uERA5o2RYZ3EYEM4VSc='
+      AIRFLOW__WEBSERVER__SECRET_KEY: supersecret
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./scraper:/opt/airflow/scraper
+      - ./database:/opt/airflow/data
+      - ./.env:/opt/airflow/.env
+      - ./requirements.txt:/requirements.txt
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    command: >
+      bash -c "pip install -r /requirements.txt && airflow webserver"
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.1
+    restart: always
+    depends_on:
+      airflow-webserver:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__DEFAULT_TIMEZONE: Asia/Kolkata
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__FERNET_KEY: 'ndegKmAQy3GYgy75XVoER2Z4uERA5o2RYZ3EYEM4VSc='
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./scraper:/opt/airflow/scraper
+      - ./database:/opt/airflow/data
+      - ./.env:/opt/airflow/.env
+      - ./requirements.txt:/requirements.txt
+    env_file:
+      - .env
+    command: >
+      bash -c "pip install -r /requirements.txt && airflow scheduler"
+
+
+
+
+  flask-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hybrid-flask-app
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+    environment:
+      - FLASK_ENV=development    
+      
+
+volumes:
+  postgres_data:

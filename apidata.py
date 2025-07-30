@@ -18,7 +18,7 @@ host=os.getenv('HOST_NAME')
 
 
 path=datetime.now().strftime("year=%Y/month=%m/day=%d")
-check_path = f'C:/Users/arsha/Desktop/hybrid/database/web_userlogs/{path}/'
+check_path = f'/opt/airflow/data/web_userlogs/{path}/'
 if not os.path.exists(check_path):
     os.makedirs(check_path)
 
@@ -180,4 +180,4 @@ def movie_search():
     return render_template_string(movie_page, movie_data=movie_data, error=error)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='localhost', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000)
