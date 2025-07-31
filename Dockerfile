@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install dependencies
-RUN pip install flask requests python-dotenv pymysql
+RUN pip install flask requests python-dotenv pymysql cryptography
 
 
 # Copy the rest of the code
