@@ -6,35 +6,37 @@ import logging
 import pymysql
 from pymysql import Error
 from datetime import datetime
+from pathlib import Path
 
 app = Flask(__name__)
 load_dotenv(".env")
 
+# Environment variables
 api_key = os.getenv('OMDB_API_KEY')
-user=os.getenv('USER_NAME')
-password=os.getenv('USER_PASSWORD')
-database=os.getenv('DATABASE_NAME')
-host=os.getenv('HOST_NAME')
+user = os.getenv('USER_NAME')
+password = os.getenv('USER_PASSWORD')
+database = os.getenv('DATABASE_NAME')
+host = os.getenv('HOST_NAME')
 
+# Set log file path based on current date
+log_dir = Path(f"C:/Users/arsha/Desktop/Hybrid/database/web_userlogs/year={datetime.now().year}/month={datetime.now().month:02}/day={datetime.now().day:02}")
+log_dir.mkdir(parents=True, exist_ok=True)
+log_file = log_dir / "web_user.log"
 
-path=datetime.now().strftime("year=%Y/month=%m/day=%d")
-check_path = f'/opt/airflow/data/web_userlogs/{path}/'
-if not os.path.exists(check_path):
-    os.makedirs(check_path)
-
+# Configure logging
 logging.basicConfig(
-    filename=check_path + '/web_user.log',
-    
+    filename=log_file,
     level=logging.INFO,
-    format='%(asctime)s | IP: %(ip)s | Agent: %(agent)s | Movie: %(movie)s'
-    )
+    format='%(asctime)s | IP: %(ip)s | Agent: %(agent)s | Movie: %(movie    )s'
+)
 
+# HTML Template
 movie_page = '''
 <!DOCTYPE html>
 <html>
 <head>
     <title>Movie Data</title>
-    <style>
+      <style>
         body {
             position:relative;
             top:0;
@@ -83,7 +85,7 @@ movie_page = '''
         </form>
 
         {% if error %}
-        <p style="color:red;">{{ error }}</p>
+            <p style="color:red;">{{ error }}</p>
         {% endif %}
 
         {% if movie_data %}
@@ -94,7 +96,7 @@ movie_page = '''
             <p><strong>Plot:</strong> {{ movie_data.Plot }}</p>
             <p><strong>IMDB Rating:</strong> {{ movie_data.imdbRating }}</p>
             <p><strong>Actors:</strong> {{ movie_data.Actors }}</p>
-            <img src="{{ movie_data.Poster }}" alt="Movie Poster" style="width:400px; border-radius:10px;">
+            <img src="{{ movie_data.Poster }}" alt="Movie Poster">
         </div>
         {% endif %}
     </div>
@@ -102,7 +104,8 @@ movie_page = '''
 </html>
 '''
 
-def store_movie_in_db(movie_data,host,user,password,database):
+# Function to store movie data in MySQL
+def store_movie_in_db(movie_data, host, user, password, database):
     try:
         connection = pymysql.connect(
             host=host,
@@ -111,31 +114,27 @@ def store_movie_in_db(movie_data,host,user,password,database):
             database=database,
             port=3306
         )
+        cursor = connection.cursor()
 
-        if connection:
-            cursor = connection.cursor()
+        insert_query = """
+        INSERT INTO searched_movies (title, year, genre, director, plot, imdb_rating, actors, poster, searched_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
+        """
+        values = (
+            movie_data.get('Title'),
+            movie_data.get('Year'),
+            movie_data.get('Genre'),
+            movie_data.get('Director'),
+            movie_data.get('Plot'),
+            movie_data.get('imdbRating'),
+            movie_data.get('Actors'),
+            movie_data.get('Poster')
+        )
 
-            insert_query = """
-            INSERT INTO searched_movies (title, year, genre, director,plot,imdb_rating, actors, poster,searched_at)
-            VALUES (%s, %s, %s, %s,%s, %s, %s, %s, NOW())
-            """
-            values = (
-                movie_data.get('Title'),
-                movie_data.get('Year'),
-                movie_data.get('Genre'),
-                movie_data.get('Director'),
-                movie_data.get('Plot'),
-                movie_data.get('imdbRating'),
-                movie_data.get('Actors'),
-                movie_data.get('Poster')
-                
-            )
-
-            cursor.execute(insert_query, values)
-            connection.commit()
+        cursor.execute(insert_query, values)
+        connection.commit()
 
     except Error as e:
-        print('test')
         print("MySQL Error:", e)
 
     finally:
@@ -143,39 +142,36 @@ def store_movie_in_db(movie_data,host,user,password,database):
             cursor.close()
             connection.close()
 
-
-@app.before_request
-def log_request_info():
-    logging.info(f"Request from {request.remote_addr}: {request.method} {request.url}")
-
 @app.route('/', methods=['GET', 'POST'])
 def movie_search():
     movie_data = None
     error = None
 
     if request.method == 'POST':
-        movie_name = request.form['movie_name']
-        
+        movie_name = request.form['movie_name'].strip()
+
         user_ip = request.remote_addr
         user_agent = request.headers.get('User-Agent')
-        
-        logging.info('', extra={
+
+        # Log request
+        logging.info('User search', extra={
             'ip': user_ip,
             'agent': user_agent,
             'movie': movie_name
         })
 
-        url = f"http://www.omdbapi.com/?t={movie_name.strip().replace(' ', '+')}&apikey={api_key}"
-        response = requests.get(url)
-        result = response.json()
+        url = f"http://www.omdbapi.com/?t={movie_name.replace(' ', '+')}&apikey={api_key}"
+        try:
+            response = requests.get(url, timeout=5)
+            result = response.json()
 
-
-        if result.get('Response') == 'True':
-            movie_data = result
-            store_movie_in_db(movie_data,host,user,password,database)
-
-        else:
-            error = f"Movie '{movie_name}' not found."
+            if result.get('Response') == 'True':
+                movie_data = result
+                store_movie_in_db(movie_data, host, user, password, database)
+            else:
+                error = f"Movie '{movie_name}' not found."
+        except Exception as e:
+            error = f"Failed to fetch movie data: {str(e)}"
 
     return render_template_string(movie_page, movie_data=movie_data, error=error)
 

@@ -5,10 +5,8 @@ from datetime import datetime, timedelta
 from localtos3 import business_tranfer, scraper_transfer, weblogs_transfer
 from runspider import scraper_call
 
-def run_all_transfar():
-    business_tranfer()
-    scraper_transfer()
-    weblogs_transfer()
+
+    
 
 default_args = {
     "owner": 'airflow',
@@ -47,10 +45,22 @@ with DAG(
     tags=["datatransfer"]
 ) as localtos3_dag:
 
-    start_transfer = PythonOperator(
+    start_transfer_bus = PythonOperator(
         task_id="run_transfer",
-        python_callable=run_all_transfar
+        python_callable=business_tranfer
     )
+    
+    start_transfer_scraper=PythonOperator(
+        task_id="scraper_tranfer",
+        python_callable=scraper_transfer
+    )
+    
+    start_transfer_web_logs=PythonOperator(
+        task_id="weblogs_transfer",
+        python_callable=weblogs_transfer
+    )
+    
+    start_transfer_bus>>start_transfer_scraper>>start_transfer_web_logs
 
 # 3️⃣ DAG to stop Flask server
 

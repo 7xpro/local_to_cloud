@@ -12,7 +12,8 @@ RUN pip install flask requests python-dotenv pymysql
 
 
 # Copy the rest of the code
-COPY . .
+COPY apidata.py /app/apidata.py
+
 
 # Expose the port Flask will run on
 EXPOSE 5000

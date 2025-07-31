@@ -62,7 +62,6 @@ services:
       - "8080:8080"
     command: >
       bash -c "pip install -r /requirements.txt && airflow webserver"
-
   airflow-scheduler:
     image: apache/airflow:2.9.1
     restart: always
@@ -88,22 +87,19 @@ services:
       bash -c "pip install -r /requirements.txt && airflow scheduler"
 
 
-
-
   flask-app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: hybrid-flask-app
+    volumes:
+      - ./database:/app/database
+      - ./.env:/app/.env  
     ports:
       - "5000:5000"
-    volumes:
-      - .:/app
-    depends_on:
-      - postgres
-    environment:
-      - FLASK_ENV=development    
-      
+    env_file:
+      - .env
+    depends_on: []
 
 volumes:
   postgres_data:
