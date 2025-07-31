@@ -4,6 +4,7 @@ from airflow.operators.bash import BashOperator
 from datetime import datetime, timedelta
 from localtos3 import business_tranfer, scraper_transfer, weblogs_transfer
 from runspider import scraper_call
+from mysqldatadump import get_conn
 
 
     
@@ -14,7 +15,7 @@ default_args = {
     "retry_delay": timedelta(minutes=2)
 }
 
-# 1️⃣ DAG to start Flask server and run scraper
+
 with DAG(
     dag_id="scraper",
     default_args=default_args,
@@ -34,7 +35,7 @@ with DAG(
 
     
 
-# 2️⃣ DAG to transfer local files to S3
+
 with DAG(
     dag_id="localtos3",
     default_args=default_args,
@@ -62,5 +63,18 @@ with DAG(
     
     start_transfer_bus>>start_transfer_scraper>>start_transfer_web_logs
 
-# 3️⃣ DAG to stop Flask server
 
+with DAG(
+    dag_id="weekly_mysql_backup",
+    default_args=default_args,
+    description="Weekly MySQL data backup to S3",
+    start_date=datetime(2025, 7, 31),
+    schedule_interval="0 2 * * 0",
+    catchup=False,
+    tags=["database", "backup"],
+) as database_backup:
+
+    start_backup = PythonOperator(
+        task_id="mysqldatadump",
+        python_callable=get_conn
+    )
