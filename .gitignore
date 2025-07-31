@@ -3,4 +3,4 @@ user_search.log
 webapp.log
 database
 localtocloud
-dags\__pycache__
+dags/__pycache__
