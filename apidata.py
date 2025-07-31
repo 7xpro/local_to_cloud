@@ -19,7 +19,7 @@ database = os.getenv('DATABASE_NAME')
 host = os.getenv('HOST_NAME')
 
 # Set log file path based on current date
-log_dir = Path(f"C:/Users/arsha/Desktop/Hybrid/database/web_userlogs/year={datetime.now().year}/month={datetime.now().month:02}/day={datetime.now().day:02}")
+log_dir = Path(f"/app/database/web_userlogs/year={datetime.now().year}/month={datetime.now().month:02}/day={datetime.now().day:02}")
 log_dir.mkdir(parents=True, exist_ok=True)
 log_file = log_dir / "web_user.log"
 
@@ -27,7 +27,7 @@ log_file = log_dir / "web_user.log"
 logging.basicConfig(
     filename=log_file,
     level=logging.INFO,
-    format='%(asctime)s | IP: %(ip)s | Agent: %(agent)s | Movie: %(movie    )s'
+    format='%(asctime)s | IP: %(ip)s | Agent: %(agent)s | Movie: %(movie)s'
 )
 
 # HTML Template
