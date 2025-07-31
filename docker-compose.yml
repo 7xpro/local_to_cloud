@@ -36,7 +36,7 @@ services:
       - ./.env:/opt/airflow/.env
       - ./requirements.txt:/requirements.txt
     command: >
-      bash -c "pip install -r /requirements.txt && airflow db init && airflow users create --username admin --password admin --firstname Arshad --lastname Khan --role Admin --email arshad@example.com"
+      bash -c "pip install -r /requirements.txt && airflow db init && airflow users create --username admin --password admin --firstname Arshad --lastname Khan --role Admin --email arshadwork6@gmail.com"
 
   airflow-webserver:
     image: apache/airflow:2.9.1
