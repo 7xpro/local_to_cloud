@@ -117,7 +117,7 @@ def store_movie_in_db(movie_data, host, user, password, database):
         cursor = connection.cursor()
 
         insert_query = """
-        INSERT INTO searched_movies (title, year, genre, director, plot, imdb_rating, actors, poster, searched_at)
+        INSERT INTO searched_movies (title, reales_date, genre, director, plot, imdb_rating, actors, poster, searched_at)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
         """
         values = (
