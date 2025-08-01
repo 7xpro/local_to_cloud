@@ -4,15 +4,15 @@ from airflow.operators.bash import BashOperator
 from datetime import datetime, timedelta
 from localtos3 import business_tranfer, scraper_transfer, weblogs_transfer
 from runspider import scraper_call
-from mysqldatadump import get_conn
+from mysqldatadump import backup_mysql_to_s3
 
 
     
 
 default_args = {
     "owner": 'airflow',
-    "retries": 2,
-    "retry_delay": timedelta(minutes=2)
+    "retries": 1,
+    "retry_delay": timedelta(minutes=1)
 }
 
 
@@ -76,5 +76,5 @@ with DAG(
 
     start_backup = PythonOperator(
         task_id="mysqldatadump",
-        python_callable=get_conn
+        python_callable=backup_mysql_to_s3
     )
